@@ -8,7 +8,6 @@ import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 export const InteractiveFamilyTree = () => {
   const { treeData, isLoading, error, refetch } = useFamilyTree();
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [translate, setTranslate] = useState({ x: 0, y: 0 });
 
   const renderCustomNodeElement = useCallback(({ nodeDatum, toggleNode }: any) => (
     <g>
@@ -79,14 +78,7 @@ export const InteractiveFamilyTree = () => {
     <div className="w-full h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50">
       <Tree
         data={treeData}
-        translate={translate}
-        onInit={(tree) => {
-          const { x, y } = tree.containerElem.getBoundingClientRect();
-          setTranslate({
-            x: x + tree.containerElem.clientWidth / 2,
-            y: y + 150
-          });
-        }}
+        translate={{ x: 400, y: 150 }}
         orientation="vertical"
         pathFunc="diagonal"
         renderCustomNodeElement={renderCustomNodeElement}
