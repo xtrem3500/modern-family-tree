@@ -95,6 +95,14 @@
     @apply bg-gradient-to-r from-whatsapp-600 to-whatsapp-500 bg-clip-text text-transparent;
   }
 
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg;
+  }
+
+  .hover-lift {
+    @apply hover:shadow-xl hover:-translate-y-1;
+  }
+
   .animate-fade-in {
     animation: fadeIn 0.3s ease-in-out;
   }
