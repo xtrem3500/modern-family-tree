@@ -88,29 +88,6 @@ export const InteractiveFamilyTree = () => {
         scaleExtent={{ min: 0.3, max: 2 }}
         enableLegacyTransitions
         transitionDuration={500}
-        styles={{
-          links: {
-            stroke: '#25D366',
-            strokeWidth: 2,
-            strokeOpacity: 0.8,
-          },
-          nodes: {
-            node: {
-              circle: {
-                fill: 'transparent',
-                strokeWidth: 0,
-              },
-              name: {
-                stroke: 'transparent',
-                fill: 'transparent',
-              },
-              attributes: {
-                stroke: 'transparent',
-                fill: 'transparent',
-              },
-            },
-          },
-        }}
       />
     </div>
   );
