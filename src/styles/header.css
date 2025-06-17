@@ -1,0 +1,148 @@
+
+@layer components {
+  /* Dégradé du header */
+  .header-gradient {
+    @apply bg-gradient-to-r from-whatsapp-500/90 to-whatsapp-600/90;
+  }
+
+  .header-gradient-scrolled {
+    @apply bg-gradient-to-r from-whatsapp-500/95 to-whatsapp-600/95 shadow-lg;
+  }
+
+  /* Animation du logo */
+  .logo-container {
+    @apply relative;
+  }
+
+  .logo-glow {
+    @apply absolute inset-0 bg-white/20 rounded-full blur-md
+           transition-transform duration-500;
+  }
+
+  .logo-glow:hover {
+    @apply scale-150;
+  }
+
+  /* Style du titre et sous-titre */
+  .header-title {
+    @apply text-xl font-bold text-white transition-colors duration-300;
+  }
+
+  .header-subtitle {
+    @apply text-sm text-whatsapp-100/80 transition-colors duration-300;
+  }
+
+  /* Zone sociale */
+  .social-button {
+    @apply p-2 text-white/80 hover:text-white transition-colors duration-200
+           hover:bg-white/10 rounded-lg;
+  }
+
+  /* Zone utilisateur */
+  .user-avatar {
+    @apply w-10 h-10 rounded-full border-2 border-white/20
+           hover:border-white/40 transition-colors duration-200;
+  }
+
+  .user-status {
+    @apply absolute bottom-0 right-0 w-3 h-3 bg-green-400
+           rounded-full border-2 border-white animate-pulse;
+  }
+
+  .user-name {
+    @apply text-sm font-medium text-white;
+  }
+
+  .user-status-text {
+    @apply text-xs text-whatsapp-100/80;
+  }
+
+  /* Navigation */
+  .nav-link {
+    @apply flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200;
+  }
+
+  .nav-link.active {
+    @apply bg-white/20 text-white shadow-sm;
+  }
+
+  .nav-link.inactive {
+    @apply text-white/80 hover:bg-white/10 hover:text-white;
+  }
+
+  /* Menu mobile */
+  .mobile-menu {
+    @apply md:hidden absolute top-20 left-0 right-0 bg-white/95 backdrop-blur-md 
+           border-t border-white/20 transition-all duration-300 ease-in-out;
+  }
+
+  .mobile-menu.open {
+    @apply opacity-100 visible;
+  }
+
+  .mobile-menu.closed {
+    @apply opacity-0 invisible;
+  }
+}
+
+/* Animations personnalisées */
+@keyframes logo-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes status-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.logo-bounce {
+  animation: logo-bounce 1s ease-in-out infinite;
+}
+
+.logo-glow {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.status-pulse {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* Effets de survol */
+.header-link-hover:hover .header-icon {
+  transform: scale(1.1);
+}
+
+.social-hover:hover {
+  transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-title {
+    @apply text-lg;
+  }
+  
+  .header-subtitle {
+    @apply text-xs;
+  }
+}
