@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -103,6 +103,28 @@ export const FamilyRegisterForm = () => {
       }
 
       if (authData.user) {
+        // Créer le profil dans la table profiles
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            email: data.email,
+            first_name: data.firstName,
+            last_name: data.lastName,
+            phone: data.phone || '',
+            current_location: data.currentLocation || '',
+            birth_place: data.birthPlace || '',
+            photo_url: data.photoUrl || '',
+            title: isFirstUser ? 'Patriarche' : 'Membre',
+            is_patriarch: isFirstUser,
+            is_admin: false,
+          });
+
+        if (profileError) {
+          console.error('Erreur création profil:', profileError);
+          // Continue même si l'insertion du profil échoue
+        }
+
         toast({
           title: "Inscription réussie !",
           description: isFirstUser 
