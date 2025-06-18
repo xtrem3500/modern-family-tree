@@ -10,7 +10,7 @@ export interface FamilyMember {
   birthPlace?: string;
   currentLocation?: string;
   phone?: string;
-  email?: string;
+  email: string;
   photoUrl?: string;
   avatarUrl?: string;
   fatherId?: string;

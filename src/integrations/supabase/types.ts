@@ -386,33 +386,27 @@ export type Database = {
         Args: Record<PropertyKey, never> | { auth_code: string }
         Returns: undefined
       }
-      delete_all_users: {
-        Args: Record<PropertyKey, never> | { auth_code: string }
-        Returns: undefined
-      }
       is_first_user: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
       manage_profile: {
-        Args:
-          | Record<PropertyKey, never>
-          | {
-              p_id: string
-              p_email: string
-              p_first_name: string
-              p_last_name: string
-              p_role: string
-              p_country: string
-              p_phone: string
-              p_photo_url: string
-              p_birth_date: string
-              p_birth_place: string
-              p_title: string
-              p_is_patriarch: boolean
-              p_is_admin: boolean
-              p_operation: string
-            }
+        Args: {
+          p_id: string
+          p_email: string
+          p_first_name: string
+          p_last_name: string
+          p_role: string
+          p_country: string
+          p_phone: string
+          p_photo_url: string
+          p_birth_date: string
+          p_birth_place: string
+          p_title: string
+          p_is_patriarch: boolean
+          p_is_admin: boolean
+          p_operation: string
+        }
         Returns: undefined
       }
     }

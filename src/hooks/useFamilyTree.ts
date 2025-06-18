@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { FamilyMember } from '@/types/family';
 
 interface TreeNode {
@@ -73,7 +73,7 @@ export const useFamilyTree = () => {
       setError(null);
 
       const { data: members, error: fetchError } = await supabase
-        .from('family_members')
+        .from('profiles')
         .select('*')
         .order('created_at', { ascending: true });
 
@@ -141,7 +141,28 @@ export const useFamilyTree = () => {
         const tree = buildTree(mockMembers);
         setTreeData(tree);
       } else {
-        const tree = buildTree(members);
+        // Convertir les données profiles en FamilyMember
+        const familyMembers: FamilyMember[] = members.map(profile => ({
+          id: profile.id,
+          firstName: profile.first_name,
+          lastName: profile.last_name,
+          title: profile.title || 'Membre',
+          birthDate: profile.birth_date || '',
+          birthPlace: profile.birth_place || '',
+          currentLocation: profile.current_location || '',
+          phone: profile.phone || '',
+          email: profile.email,
+          photoUrl: profile.photo_url || '',
+          avatarUrl: profile.avatar_url || '',
+          fatherId: profile.father_id || '',
+          motherId: profile.mother_id || '',
+          situation: profile.situation || '',
+          profession: '', // Pas dans profiles
+          createdAt: profile.created_at,
+          updatedAt: profile.updated_at
+        }));
+        
+        const tree = buildTree(familyMembers);
         setTreeData(tree);
       }
     } catch (err) {
