@@ -113,7 +113,7 @@ export const useFamilyTree = () => {
             id: '3',
             firstName: 'Jean',
             lastName: 'Martin',
-            title: 'Fils aîné',
+            title: 'Fils',
             birthDate: '1975-11-10',
             currentLocation: 'Paris, France',
             photoUrl: '',

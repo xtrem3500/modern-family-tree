@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { X, User, Calendar, MapPin, Phone, Mail, Briefcase, Lock, Camera } from 'lucide-react';
 import { FamilyMember } from '@/types/family';
-import { Constants } from '@/integrations/supabase/types';
+import { Database } from '@/integrations/supabase/types';
 import { Avatar } from '@/components/shared/Avatar';
 
 interface AddMemberDialogProps {
@@ -13,7 +13,21 @@ interface AddMemberDialogProps {
 }
 
 export const AddMemberDialog = ({ isOpen, onClose, onSubmit, existingMembers }: AddMemberDialogProps) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    firstName: string;
+    lastName: string;
+    title: Database['public']['Enums']['family_title'] | '';
+    birthDate: string;
+    birthPlace: string;
+    currentLocation: string;
+    phone: string;
+    email: string;
+    situation: string;
+    profession: string;
+    fatherId: string;
+    motherId: string;
+    photoUrl: string;
+  }>({
     firstName: '',
     lastName: '',
     title: '',
@@ -33,22 +47,28 @@ export const AddMemberDialog = ({ isOpen, onClose, onSubmit, existingMembers }: 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
-    setFormData({
-      firstName: '',
-      lastName: '',
-      title: '',
-      birthDate: '',
-      birthPlace: '',
-      currentLocation: '',
-      phone: '',
-      email: '',
-      situation: '',
-      profession: '',
-      fatherId: '',
-      motherId: '',
-      photoUrl: ''
-    });
+    // Ne soumettre que si le titre est valide
+    if (formData.title) {
+      onSubmit({
+        ...formData,
+        title: formData.title as Database['public']['Enums']['family_title']
+      });
+      setFormData({
+        firstName: '',
+        lastName: '',
+        title: '',
+        birthDate: '',
+        birthPlace: '',
+        currentLocation: '',
+        phone: '',
+        email: '',
+        situation: '',
+        profession: '',
+        fatherId: '',
+        motherId: '',
+        photoUrl: ''
+      });
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -154,9 +174,30 @@ export const AddMemberDialog = ({ isOpen, onClose, onSubmit, existingMembers }: 
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-whatsapp-500 focus:border-transparent transition-all duration-200"
               >
                 <option value="">Sélectionner un titre...</option>
-                {Constants.public.Enums.family_title.map(title => (
-                  <option key={title} value={title}>{title}</option>
-                ))}
+                <option value="Patriarche">Patriarche</option>
+                <option value="Matriarche">Matriarche</option>
+                <option value="Père">Père</option>
+                <option value="Mère">Mère</option>
+                <option value="Fils">Fils</option>
+                <option value="Fille">Fille</option>
+                <option value="Grand-père">Grand-père</option>
+                <option value="Grand-mère">Grand-mère</option>
+                <option value="Petit-fils">Petit-fils</option>
+                <option value="Petite-fille">Petite-fille</option>
+                <option value="Oncle">Oncle</option>
+                <option value="Tante">Tante</option>
+                <option value="Neveu">Neveu</option>
+                <option value="Nièce">Nièce</option>
+                <option value="Cousin">Cousin</option>
+                <option value="Cousine">Cousine</option>
+                <option value="Époux">Époux</option>
+                <option value="Épouse">Épouse</option>
+                <option value="Beau-père">Beau-père</option>
+                <option value="Belle-mère">Belle-mère</option>
+                <option value="Beau-fils">Beau-fils</option>
+                <option value="Belle-fille">Belle-fille</option>
+                <option value="Frère">Frère</option>
+                <option value="Sœur">Sœur</option>
               </select>
             </div>
           </div>
