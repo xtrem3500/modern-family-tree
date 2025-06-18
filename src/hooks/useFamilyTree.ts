@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { FamilyMember } from '@/types/family';
 
 interface TreeNode {
@@ -72,7 +72,7 @@ export const useFamilyTree = () => {
       setIsLoading(true);
       setError(null);
 
-      const { data: members, error: fetchError } = await supabase
+      const { data: profiles, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: true });
@@ -81,7 +81,7 @@ export const useFamilyTree = () => {
         throw fetchError;
       }
 
-      if (!members || members.length === 0) {
+      if (!profiles || profiles.length === 0) {
         // Utiliser les données mockées si pas de données en base
         const mockMembers: FamilyMember[] = [
           {
@@ -93,6 +93,7 @@ export const useFamilyTree = () => {
             currentLocation: 'Lyon, France',
             photoUrl: '',
             situation: 'Marié',
+            email: 'pierre.martin@example.com',
             createdAt: '2024-01-01',
             updatedAt: '2024-01-01'
           },
@@ -100,11 +101,12 @@ export const useFamilyTree = () => {
             id: '2',
             firstName: 'Marie',
             lastName: 'Martin',
-            title: 'Épouse',
+            title: 'Matriarche',
             birthDate: '1948-07-22',
             currentLocation: 'Lyon, France',
             photoUrl: '',
             situation: 'Mariée',
+            email: 'marie.martin@example.com',
             spouseId: '1',
             createdAt: '2024-01-01',
             updatedAt: '2024-01-01'
@@ -118,6 +120,7 @@ export const useFamilyTree = () => {
             currentLocation: 'Paris, France',
             photoUrl: '',
             situation: 'Marié',
+            email: 'jean.martin@example.com',
             fatherId: '1',
             motherId: '2',
             createdAt: '2024-01-01',
@@ -132,6 +135,7 @@ export const useFamilyTree = () => {
             currentLocation: 'Nice, France',
             photoUrl: '',
             situation: 'Célibataire',
+            email: 'sophie.martin@example.com',
             fatherId: '1',
             motherId: '2',
             createdAt: '2024-01-01',
@@ -142,7 +146,7 @@ export const useFamilyTree = () => {
         setTreeData(tree);
       } else {
         // Convertir les données profiles en FamilyMember
-        const familyMembers: FamilyMember[] = members.map(profile => ({
+        const familyMembers: FamilyMember[] = profiles.map(profile => ({
           id: profile.id,
           firstName: profile.first_name,
           lastName: profile.last_name,
@@ -157,7 +161,7 @@ export const useFamilyTree = () => {
           fatherId: profile.father_id || '',
           motherId: profile.mother_id || '',
           situation: profile.situation || '',
-          profession: '', // Pas dans profiles
+          profession: '', // Pas dans profiles pour l'instant
           createdAt: profile.created_at,
           updatedAt: profile.updated_at
         }));
