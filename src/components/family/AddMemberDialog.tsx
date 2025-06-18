@@ -1,7 +1,9 @@
 
 import { useState } from 'react';
-import { X, User, Calendar, MapPin, Phone, Mail, Briefcase } from 'lucide-react';
+import { X, User, Calendar, MapPin, Phone, Mail, Briefcase, Lock, Camera } from 'lucide-react';
 import { FamilyMember } from '@/types/family';
+import { Constants } from '@/integrations/supabase/types';
+import { Avatar } from '@/components/shared/Avatar';
 
 interface AddMemberDialogProps {
   isOpen: boolean;
@@ -23,7 +25,8 @@ export const AddMemberDialog = ({ isOpen, onClose, onSubmit, existingMembers }: 
     situation: '',
     profession: '',
     fatherId: '',
-    motherId: ''
+    motherId: '',
+    photoUrl: ''
   });
 
   if (!isOpen) return null;
@@ -43,12 +46,25 @@ export const AddMemberDialog = ({ isOpen, onClose, onSubmit, existingMembers }: 
       situation: '',
       profession: '',
       fatherId: '',
-      motherId: ''
+      motherId: '',
+      photoUrl: ''
     });
   };
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        handleChange('photoUrl', result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -67,6 +83,29 @@ export const AddMemberDialog = ({ isOpen, onClose, onSubmit, existingMembers }: 
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Avatar Selection */}
+          <div className="text-center space-y-4">
+            <div className="flex justify-center">
+              <div className="relative">
+                <Avatar
+                  src={formData.photoUrl}
+                  size="xl"
+                  fallback={formData.firstName ? formData.firstName[0].toUpperCase() : '?'}
+                />
+                <label className="absolute bottom-0 right-0 w-8 h-8 bg-whatsapp-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-whatsapp-600 transition-colors">
+                  <Camera className="w-4 h-4 text-white" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600">Cliquez sur l'icône pour ajouter une photo</p>
+          </div>
+
           {/* Personal Info */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
@@ -108,14 +147,17 @@ export const AddMemberDialog = ({ isOpen, onClose, onSubmit, existingMembers }: 
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Titre/Rôle *
               </label>
-              <input
-                type="text"
+              <select
                 required
                 value={formData.title}
                 onChange={(e) => handleChange('title', e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-whatsapp-500 focus:border-transparent transition-all duration-200"
-                placeholder="Ex: Fils, Fille, Époux, Épouse..."
-              />
+              >
+                <option value="">Sélectionner un titre...</option>
+                {Constants.public.Enums.family_title.map(title => (
+                  <option key={title} value={title}>{title}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -128,8 +170,9 @@ export const AddMemberDialog = ({ isOpen, onClose, onSubmit, existingMembers }: 
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date de naissance
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center space-x-1">
+                  <Lock className="w-3 h-3 text-gray-400" />
+                  <span>Date de naissance</span>
                 </label>
                 <input
                   type="date"
@@ -140,8 +183,9 @@ export const AddMemberDialog = ({ isOpen, onClose, onSubmit, existingMembers }: 
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Lieu de naissance
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center space-x-1">
+                  <Lock className="w-3 h-3 text-gray-400" />
+                  <span>Lieu de naissance</span>
                 </label>
                 <input
                   type="text"
@@ -154,9 +198,10 @@ export const AddMemberDialog = ({ isOpen, onClose, onSubmit, existingMembers }: 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <MapPin className="w-4 h-4 inline mr-1" />
-                Lieu de résidence actuel
+              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center space-x-1">
+                <Lock className="w-3 h-3 text-gray-400" />
+                <MapPin className="w-4 h-4" />
+                <span>Lieu de résidence actuel</span>
               </label>
               <input
                 type="text"
@@ -205,8 +250,9 @@ export const AddMemberDialog = ({ isOpen, onClose, onSubmit, existingMembers }: 
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Situation familiale
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center space-x-1">
+                  <Lock className="w-3 h-3 text-gray-400" />
+                  <span>Situation familiale</span>
                 </label>
                 <select
                   value={formData.situation}
@@ -222,9 +268,10 @@ export const AddMemberDialog = ({ isOpen, onClose, onSubmit, existingMembers }: 
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Briefcase className="w-4 h-4 inline mr-1" />
-                  Profession
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center space-x-1">
+                  <Lock className="w-3 h-3 text-gray-400" />
+                  <Briefcase className="w-4 h-4" />
+                  <span>Profession</span>
                 </label>
                 <input
                   type="text"

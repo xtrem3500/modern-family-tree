@@ -217,6 +217,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           birth_date: string | null
           birth_place: string | null
           country: string | null
@@ -238,10 +239,11 @@ export type Database = {
             | null
           role: string | null
           situation: string | null
-          title: string | null
+          title: Database["public"]["Enums"]["family_title"] | null
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
           birth_date?: string | null
           birth_place?: string | null
           country?: string | null
@@ -263,10 +265,11 @@ export type Database = {
             | null
           role?: string | null
           situation?: string | null
-          title?: string | null
+          title?: Database["public"]["Enums"]["family_title"] | null
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
           birth_date?: string | null
           birth_place?: string | null
           country?: string | null
@@ -288,7 +291,7 @@ export type Database = {
             | null
           role?: string | null
           situation?: string | null
-          title?: string | null
+          title?: Database["public"]["Enums"]["family_title"] | null
           updated_at?: string
         }
         Relationships: [
@@ -392,26 +395,53 @@ export type Database = {
         Returns: boolean
       }
       manage_profile: {
-        Args: {
-          p_id: string
-          p_email: string
-          p_first_name: string
-          p_last_name: string
-          p_role: string
-          p_country: string
-          p_phone: string
-          p_photo_url: string
-          p_birth_date: string
-          p_birth_place: string
-          p_title: string
-          p_is_patriarch: boolean
-          p_is_admin: boolean
-          p_operation: string
-        }
+        Args:
+          | Record<PropertyKey, never>
+          | {
+              p_id: string
+              p_email: string
+              p_first_name: string
+              p_last_name: string
+              p_role: string
+              p_country: string
+              p_phone: string
+              p_photo_url: string
+              p_birth_date: string
+              p_birth_place: string
+              p_title: string
+              p_is_patriarch: boolean
+              p_is_admin: boolean
+              p_operation: string
+            }
         Returns: undefined
       }
     }
     Enums: {
+      family_title:
+        | "Patriarche"
+        | "Matriarche"
+        | "Père"
+        | "Mère"
+        | "Fils"
+        | "Fille"
+        | "Grand-père"
+        | "Grand-mère"
+        | "Petit-fils"
+        | "Petite-fille"
+        | "Oncle"
+        | "Tante"
+        | "Neveu"
+        | "Nièce"
+        | "Cousin"
+        | "Cousine"
+        | "Époux"
+        | "Épouse"
+        | "Beau-père"
+        | "Belle-mère"
+        | "Beau-fils"
+        | "Belle-fille"
+        | "Frère"
+        | "Sœur"
       relationship_enum:
         | "fils/fille"
         | "cousin/cousine"
@@ -537,6 +567,32 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      family_title: [
+        "Patriarche",
+        "Matriarche",
+        "Père",
+        "Mère",
+        "Fils",
+        "Fille",
+        "Grand-père",
+        "Grand-mère",
+        "Petit-fils",
+        "Petite-fille",
+        "Oncle",
+        "Tante",
+        "Neveu",
+        "Nièce",
+        "Cousin",
+        "Cousine",
+        "Époux",
+        "Épouse",
+        "Beau-père",
+        "Belle-mère",
+        "Beau-fils",
+        "Belle-fille",
+        "Frère",
+        "Sœur",
+      ],
       relationship_enum: [
         "fils/fille",
         "cousin/cousine",

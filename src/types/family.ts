@@ -1,15 +1,18 @@
 
+import { Database } from '@/integrations/supabase/types';
+
 export interface FamilyMember {
   id: string;
   firstName: string;
   lastName: string;
-  title: string;
+  title: Database['public']['Enums']['family_title'];
   birthDate?: string;
   birthPlace?: string;
   currentLocation?: string;
   phone?: string;
   email?: string;
   photoUrl?: string;
+  avatarUrl?: string;
   fatherId?: string;
   motherId?: string;
   spouseId?: string;
