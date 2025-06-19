@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { FamilyMember } from '@/types/family';
 
 interface TreeNode {
@@ -28,10 +28,9 @@ export const useFamilyTree = () => {
     const memberMap = new Map<string, FamilyMember>();
     members.forEach(member => memberMap.set(member.id, member));
 
-    // Trouver le patriarche (membre sans père ni mère, ou avec title "Patriarche")
+    // Trouver le patriarche (membre avec title "Patriarche")
     const patriarch = members.find(member => 
-      (!member.fatherId && !member.motherId) || 
-      member.title.toLowerCase().includes('patriarche')
+      member.title === 'Patriarche'
     );
 
     if (!patriarch) {
@@ -81,72 +80,9 @@ export const useFamilyTree = () => {
         throw fetchError;
       }
 
-      if (!profiles || profiles.length === 0) {
-        // Utiliser les données mockées si pas de données en base
-        const mockMembers: FamilyMember[] = [
-          {
-            id: '1',
-            firstName: 'Pierre',
-            lastName: 'Martin',
-            title: 'Patriarche',
-            birthDate: '1945-03-15',
-            currentLocation: 'Lyon, France',
-            photoUrl: '',
-            situation: 'Marié',
-            email: 'pierre.martin@example.com',
-            createdAt: '2024-01-01',
-            updatedAt: '2024-01-01'
-          },
-          {
-            id: '2',
-            firstName: 'Marie',
-            lastName: 'Martin',
-            title: 'Matriarche',
-            birthDate: '1948-07-22',
-            currentLocation: 'Lyon, France',
-            photoUrl: '',
-            situation: 'Mariée',
-            email: 'marie.martin@example.com',
-            spouseId: '1',
-            createdAt: '2024-01-01',
-            updatedAt: '2024-01-01'
-          },
-          {
-            id: '3',
-            firstName: 'Jean',
-            lastName: 'Martin',
-            title: 'Fils',
-            birthDate: '1975-11-10',
-            currentLocation: 'Paris, France',
-            photoUrl: '',
-            situation: 'Marié',
-            email: 'jean.martin@example.com',
-            fatherId: '1',
-            motherId: '2',
-            createdAt: '2024-01-01',
-            updatedAt: '2024-01-01'
-          },
-          {
-            id: '4',
-            firstName: 'Sophie',
-            lastName: 'Martin',
-            title: 'Fille',
-            birthDate: '1978-05-18',
-            currentLocation: 'Nice, France',
-            photoUrl: '',
-            situation: 'Célibataire',
-            email: 'sophie.martin@example.com',
-            fatherId: '1',
-            motherId: '2',
-            createdAt: '2024-01-01',
-            updatedAt: '2024-01-01'
-          }
-        ];
-        const tree = buildTree(mockMembers);
-        setTreeData(tree);
-      } else {
+      if (profiles && profiles.length > 0) {
         // Convertir les données profiles en FamilyMember
-        const familyMembers: FamilyMember[] = profiles.map(profile => ({
+        const familyMembers: FamilyMember[]  = profiles.map(profile => ({
           id: profile.id,
           firstName: profile.first_name,
           lastName: profile.last_name,
@@ -161,13 +97,15 @@ export const useFamilyTree = () => {
           fatherId: profile.father_id || '',
           motherId: profile.mother_id || '',
           situation: profile.situation || '',
-          profession: '', // Pas dans profiles pour l'instant
+          profession: profile.situation || '',
           createdAt: profile.created_at,
           updatedAt: profile.updated_at
         }));
         
         const tree = buildTree(familyMembers);
         setTreeData(tree);
+      } else {
+        setTreeData(null);
       }
     } catch (err) {
       console.error('Error fetching family data:', err);

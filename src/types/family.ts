@@ -5,7 +5,7 @@ export interface FamilyMember {
   id: string;
   firstName: string;
   lastName: string;
-  title: Database['public']['Enums']['family_title'];
+  title: Database['public']['Enums']['family_title'] | 'Membre';
   birthDate?: string;
   birthPlace?: string;
   currentLocation?: string;

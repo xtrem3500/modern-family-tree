@@ -4,10 +4,12 @@ import { Card } from '@/components/ui/card';
 import { Users, TreePine, Plus, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useFamilyMembers } from '@/hooks/useFamilyMembers';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const { members, isLoading } = useFamilyMembers();
 
   const dashboardItems = [
     {
@@ -43,6 +45,15 @@ const Dashboard = () => {
       color: 'bg-gradient-to-br from-purple-500 to-purple-600',
     },
   ];
+
+  const totalMembers = members.length;
+  const patriarchs = members.filter(m => m.title === 'Patriarche').length;
+  const generations = Math.max(1, new Set(members.map(m => {
+    if (m.title.includes('Grand-')) return 3;
+    if (m.title.includes('Petit-')) return 1;
+    if (['Père', 'Mère', 'Patriarche', 'Matriarche'].includes(m.title)) return 2;
+    return 1;
+  })).size);
 
   return (
     <div className="container mx-auto px-6 py-8">
@@ -100,7 +111,9 @@ const Dashboard = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Total des membres</p>
-                <p className="text-2xl font-bold text-gray-900">4</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {isLoading ? '...' : totalMembers}
+                </p>
               </div>
             </div>
           </Card>
@@ -112,7 +125,9 @@ const Dashboard = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Générations</p>
-                <p className="text-2xl font-bold text-gray-900">3</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {isLoading ? '...' : generations}
+                </p>
               </div>
             </div>
           </Card>
@@ -123,8 +138,10 @@ const Dashboard = () => {
                 <Users className="w-6 h-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Branches actives</p>
-                <p className="text-2xl font-bold text-gray-900">2</p>
+                <p className="text-sm text-gray-600">Patriarches</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {isLoading ? '...' : patriarchs}
+                </p>
               </div>
             </div>
           </Card>

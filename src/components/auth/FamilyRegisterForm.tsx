@@ -1,144 +1,145 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Avatar } from '@/components/shared/Avatar';
-import { Camera, Eye, EyeOff } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Upload, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-const familyRegisterSchema = z.object({
-  firstName: z.string().min(1, "Le prénom est requis"),
-  lastName: z.string().min(1, "Le nom est requis"),
-  email: z.string().email("Email invalide"),
-  password: z.string().min(6, "Mot de passe minimum 6 caractères"),
+const registerSchema = z.object({
+  email: z.string().email('Email invalide'),
+  password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
+  firstName: z.string().min(2, 'Le prénom est requis'),
+  lastName: z.string().min(2, 'Le nom est requis'),
   phone: z.string().optional(),
   profession: z.string().optional(),
   currentLocation: z.string().optional(),
   birthPlace: z.string().optional(),
-  photoUrl: z.string().optional(),
+  country: z.string().optional(),
 });
 
-type FamilyRegisterData = z.infer<typeof familyRegisterSchema>;
+type RegisterFormData = z.infer<typeof registerSchema>;
 
 export const FamilyRegisterForm = () => {
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [profilePhoto, setProfilePhoto] = useState<string>('');
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const form = useForm<FamilyRegisterData>({
-    resolver: zodResolver(familyRegisterSchema),
-    defaultValues: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      password: '',
-      phone: '',
-      profession: '',
-      currentLocation: '',
-      birthPlace: '',
-      photoUrl: '',
-    }
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
   });
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setPhotoFile(file);
       const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setProfilePhoto(result);
-        form.setValue('photoUrl', result);
-      };
+      reader.onload = () => setPhotoPreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
 
-  const onSubmit = async (data: FamilyRegisterData) => {
-    setIsLoading(true);
-    
+  const onSubmit = async (data: RegisterFormData) => {
     try {
+      setIsLoading(true);
+
       // Vérifier si c'est le premier utilisateur
       const { data: existingProfiles, error: checkError } = await supabase
         .from('profiles')
-        .select('id')
-        .limit(1);
+        .select('id');
 
       if (checkError) {
-        throw new Error('Erreur lors de la vérification des utilisateurs existants');
+        console.error('Error checking existing profiles:', checkError);
       }
 
       const isFirstUser = !existingProfiles || existingProfiles.length === 0;
 
-      // Créer le compte utilisateur
+      // Créer l'utilisateur dans Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-          data: {
-            first_name: data.firstName,
-            last_name: data.lastName,
-            phone: data.phone || '',
-            profession: data.profession || '',
-            current_location: data.currentLocation || '',
-            birth_place: data.birthPlace || '',
-            photo_url: data.photoUrl || '',
-            title: isFirstUser ? 'Patriarche' : 'Membre',
-            is_patriarch: isFirstUser,
-            is_admin: false,
-          }
-        }
       });
 
       if (authError) {
-        throw authError;
+        throw new Error(authError.message);
       }
 
-      if (authData.user) {
-        // Créer le profil dans la table profiles
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authData.user.id,
-            email: data.email,
-            first_name: data.firstName,
-            last_name: data.lastName,
-            phone: data.phone || '',
-            current_location: data.currentLocation || '',
-            birth_place: data.birthPlace || '',
-            photo_url: data.photoUrl || '',
-            title: isFirstUser ? 'Patriarche' : 'Membre',
-            is_patriarch: isFirstUser,
-            is_admin: false,
-          });
+      if (!authData.user) {
+        throw new Error('Erreur lors de la création du compte');
+      }
 
-        if (profileError) {
-          console.error('Erreur création profil:', profileError);
-          // Continue même si l'insertion du profil échoue
-        }
-
-        toast({
-          title: "Inscription réussie !",
-          description: isFirstUser 
-            ? "Félicitations ! Vous êtes maintenant le patriarche de la famille." 
-            : "Votre compte a été créé avec succès.",
-        });
+      // Upload de la photo si présente
+      let photoUrl = null;
+      if (photoFile) {
+        const fileExt = photoFile.name.split('.').pop();
+        const fileName = `${authData.user.id}.${fileExt}`;
         
-        navigate('/dashboard');
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, photoFile);
+
+        if (uploadError) {
+          console.error('Photo upload error:', uploadError);
+        } else {
+          const { data: urlData } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(fileName);
+          photoUrl = urlData.publicUrl;
+        }
       }
-    } catch (error: any) {
-      console.error('Erreur inscription:', error);
+
+      // Créer le profil utilisateur
+      const profileData = {
+        id: authData.user.id,
+        email: data.email,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        phone: data.phone || null,
+        current_location: data.currentLocation || null,
+        birth_place: data.birthPlace || null,
+        country: data.country || null,
+        photo_url: photoUrl,
+        title: isFirstUser ? 'Patriarche' as const : 'Fils' as const,
+        is_patriarch: isFirstUser,
+        is_admin: false,
+        situation: data.profession || null,
+      };
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert(profileData);
+
+      if (profileError) {
+        throw new Error(profileError.message);
+      }
+
+      toast({
+        title: "Inscription réussie !",
+        description: isFirstUser 
+          ? "Félicitations ! Vous êtes maintenant le patriarche de votre famille."
+          : "Votre compte a été créé avec succès.",
+      });
+
+      navigate('/dashboard');
+
+    } catch (error) {
+      console.error('Registration error:', error);
       toast({
         title: "Erreur d'inscription",
-        description: error.message || "Une erreur est survenue lors de l'inscription",
+        description: error instanceof Error ? error.message : "Une erreur s'est produite",
         variant: "destructive",
       });
     } finally {
@@ -147,150 +148,145 @@ export const FamilyRegisterForm = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900">Rejoindre la famille</h2>
-        <p className="mt-2 text-gray-600">
-          Créez votre profil familial
-        </p>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {/* Photo de profil */}
+      <div className="flex flex-col items-center space-y-2">
+        <div className="relative">
+          {photoPreview ? (
+            <img
+              src={photoPreview}
+              alt="Aperçu"
+              className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+            />
+          ) : (
+            <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
+              <User className="w-8 h-8 text-gray-400" />
+            </div>
+          )}
+          <label className="absolute bottom-0 right-0 bg-whatsapp-500 text-white p-1.5 rounded-full cursor-pointer hover:bg-whatsapp-600 transition-colors">
+            <Upload className="w-3 h-3" />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoChange}
+              className="hidden"
+            />
+          </label>
+        </div>
+        <p className="text-xs text-gray-500">Photo de profil (optionnelle)</p>
       </div>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {/* Photo de profil */}
-        <div className="text-center">
-          <div className="flex justify-center mb-2">
-            <div className="relative">
-              <Avatar
-                src={profilePhoto}
-                size="lg"
-                fallback={form.watch('firstName') ? form.watch('firstName')[0].toUpperCase() : '?'}
-              />
-              <label className="absolute bottom-0 right-0 w-6 h-6 bg-whatsapp-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-whatsapp-600 transition-colors">
-                <Camera className="w-3 h-3 text-white" />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoUpload}
-                  className="hidden"
-                />
-              </label>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500">Photo de profil (optionnel)</p>
-        </div>
-
-        {/* Nom et Prénom */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="firstName">Prénom *</Label>
-            <Input
-              id="firstName"
-              {...form.register('firstName')}
-              placeholder="Prénom"
-            />
-            {form.formState.errors.firstName && (
-              <p className="text-sm text-red-600 mt-1">{form.formState.errors.firstName.message}</p>
-            )}
-          </div>
-          
-          <div>
-            <Label htmlFor="lastName">Nom *</Label>
-            <Input
-              id="lastName"
-              {...form.register('lastName')}
-              placeholder="Nom de famille"
-            />
-            {form.formState.errors.lastName && (
-              <p className="text-sm text-red-600 mt-1">{form.formState.errors.lastName.message}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Email */}
+      {/* Informations personnelles */}
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="email">Email *</Label>
+          <Label htmlFor="firstName">Prénom *</Label>
           <Input
-            id="email"
-            type="email"
-            {...form.register('email')}
-            placeholder="votre@email.com"
+            id="firstName"
+            {...register('firstName')}
+            placeholder="Votre prénom"
           />
-          {form.formState.errors.email && (
-            <p className="text-sm text-red-600 mt-1">{form.formState.errors.email.message}</p>
+          {errors.firstName && (
+            <p className="text-sm text-red-600 mt-1">{errors.firstName.message}</p>
           )}
         </div>
-
-        {/* Mot de passe */}
         <div>
-          <Label htmlFor="password">Mot de passe *</Label>
-          <div className="relative">
-            <Input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              {...form.register('password')}
-              placeholder="Mot de passe"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
-          {form.formState.errors.password && (
-            <p className="text-sm text-red-600 mt-1">{form.formState.errors.password.message}</p>
+          <Label htmlFor="lastName">Nom *</Label>
+          <Input
+            id="lastName"
+            {...register('lastName')}
+            placeholder="Votre nom"
+          />
+          {errors.lastName && (
+            <p className="text-sm text-red-600 mt-1">{errors.lastName.message}</p>
           )}
         </div>
+      </div>
 
-        {/* Téléphone */}
-        <div>
-          <Label htmlFor="phone">Téléphone</Label>
-          <Input
-            id="phone"
-            {...form.register('phone')}
-            placeholder="+33 6 12 34 56 78"
-          />
-        </div>
+      <div>
+        <Label htmlFor="email">Email *</Label>
+        <Input
+          id="email"
+          type="email"
+          {...register('email')}
+          placeholder="votre@email.com"
+        />
+        {errors.email && (
+          <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>
+        )}
+      </div>
 
-        {/* Profession */}
-        <div>
-          <Label htmlFor="profession">Profession/Activité</Label>
-          <Input
-            id="profession"
-            {...form.register('profession')}
-            placeholder="ex: Médecin, Retraité, Étudiant..."
-          />
-        </div>
+      <div>
+        <Label htmlFor="password">Mot de passe *</Label>
+        <Input
+          id="password"
+          type="password"
+          {...register('password')}
+          placeholder="Minimum 6 caractères"
+        />
+        {errors.password && (
+          <p className="text-sm text-red-600 mt-1">{errors.password.message}</p>
+        )}
+      </div>
 
-        {/* Localisation actuelle */}
-        <div>
-          <Label htmlFor="currentLocation">Localisation actuelle</Label>
-          <Input
-            id="currentLocation"
-            {...form.register('currentLocation')}
-            placeholder="ex: Paris, France"
-          />
-        </div>
+      <div>
+        <Label htmlFor="phone">Téléphone</Label>
+        <Input
+          id="phone"
+          {...register('phone')}
+          placeholder="+33 6 12 34 56 78"
+        />
+      </div>
 
-        {/* Lieu de naissance */}
-        <div>
-          <Label htmlFor="birthPlace">Lieu de naissance</Label>
-          <Input
-            id="birthPlace"
-            {...form.register('birthPlace')}
-            placeholder="ex: Lyon, France"
-          />
-        </div>
+      <div>
+        <Label htmlFor="profession">Profession / Statut</Label>
+        <Input
+          id="profession"
+          {...register('profession')}
+          placeholder="Ex: Ingénieur, Retraité, Étudiant..."
+        />
+      </div>
 
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full bg-gradient-to-r from-whatsapp-500 to-whatsapp-600 hover:from-whatsapp-600 hover:to-whatsapp-700"
-        >
-          {isLoading ? 'Inscription...' : "Créer mon profil familial"}
-        </Button>
-      </form>
-    </div>
+      <div>
+        <Label htmlFor="currentLocation">Localisation actuelle</Label>
+        <Input
+          id="currentLocation"
+          {...register('currentLocation')}
+          placeholder="Ex: Paris, France"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="birthPlace">Lieu de naissance</Label>
+        <Input
+          id="birthPlace"
+          {...register('birthPlace')}
+          placeholder="Ex: Lyon, France"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="country">Pays</Label>
+        <Input
+          id="country"
+          {...register('country')}
+          placeholder="Ex: France"
+        />
+      </div>
+
+      <Button 
+        type="submit" 
+        className="w-full bg-whatsapp-500 hover:bg-whatsapp-600"
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Inscription en cours...
+          </>
+        ) : (
+          'Créer mon compte'
+        )}
+      </Button>
+    </form>
   );
 };
